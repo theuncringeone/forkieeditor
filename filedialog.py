@@ -14,5 +14,24 @@ def openfile(self):
 
     stream = QTextStream(filehandle)
     
-    return stream.readAll()
+    text = stream.readAll()
+    name = file[0]
+
+    return text, name
+
+def savefile(self, text):
+    file = QFileDialog.getSaveFileName(self, 'Select file', os.curdir, "Text Files (*.txt);; All Files(*.*)")
+    if not file[0]:
+        return None
+    
+    filehandle = QFile(file[0])
+    if not filehandle.open(QIODevice.WriteOnly):
+        return None
+
+    stream = QTextStream(filehandle)
+    stream << text
+    stream.flush()
+
+    return file[0]
+    
 

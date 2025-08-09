@@ -10,13 +10,19 @@ class editorwidget(QWidget):
         super().__init__()
         
         self.isSaved = False
+        print(self.isSaved)
         
         self.defaultfont = QFont("Arial", 18)
 
         self.text = QTextEdit()
         self.text.setFont(self.defaultfont)
+        self.text.textChanged.connect(self.unsaved)
 
         self.vbox = QVBoxLayout()
         self.vbox.addWidget(self.text)
         
         self.setLayout(self.vbox)
+
+    def unsaved(self):
+        self.isSaved = False
+        print(self.isSaved)

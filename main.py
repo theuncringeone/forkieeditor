@@ -9,6 +9,8 @@ class mainwin(QMainWindow):
     def __init__(self, parent = ..., flags = ...):
         super().__init__()
 
+        self.currentFile = None
+
         desktop = QDesktopWidget()
         screenx = desktop.width()
         screeny = desktop.height()
@@ -24,9 +26,11 @@ class mainwin(QMainWindow):
     def setupMenuBar(self):
         self.filemenu = self.menuBar().addMenu("&File")
         self.editmenu = self.menuBar().addMenu("&Edit")
+        self.editmenu.setDisabled(True)
 
         self.newaction = QAction("New", self)
         self.filemenu.addAction(self.newaction)
+        self.newaction.triggered.connect(self.newdialog)
 
         self.openaction = QAction("Open", self)
         self.filemenu.addAction(self.openaction)
@@ -34,6 +38,11 @@ class mainwin(QMainWindow):
 
         self.saveaction = QAction("Save", self)
         self.filemenu.addAction(self.saveaction)
+        self.saveaction.triggered.connect(self.savedialog)
+
+        self.saveasaction = QAction("Save As", self)
+        self.filemenu.addAction(self.saveasaction)
+        self.saveasaction.triggered.connect(self.saveasdialog)
 
         self.filemenu.addSeparator()
 
@@ -44,14 +53,55 @@ class mainwin(QMainWindow):
     def exitdialog(self):
         if self.editor.isSaved == False:
             confirmation = QMessageBox.question(self, "", "Do you want to save the file?")
-            if confirmation == QMessageBox.y:
-                pass
+            if confirmation == QMessageBox.Yes:
+                self.savedialog()
             else:
                 QCoreApplication.instance().quit()
 
+    def newdialog(self):
+        self.editor.text.setPlainText("")
+        form.setWindowTitle("Untitled - Forkie Editor")
+        self.editor.isSaved = True
+
+    def savedialog(self):
+        if not self.currentFile:  # Save As
+            try:
+                filePath = filedialog.savefile(self, self.editor.text.toPlainText())
+                if filePath:
+                    self.currentFile = filePath
+                    self.setWindowTitle(filePath + " - Forkie Editor")
+                    self.editor.isSaved = True
+            except TypeError:
+                pass
+        else:  # Overwrite existing file
+            file = QFile(self.currentFile)
+            if not file.open(QIODevice.WriteOnly):
+                return
+            stream = QTextStream(file)
+            stream << self.editor.text.toPlainText()
+            stream.flush()
+            self.editor.isSaved = True
+
+    def saveasdialog(self):
+        try:
+            filePath = filedialog.savefile(self, self.editor.text.toPlainText())
+            if filePath:
+                self.currentFile = filePath
+                self.setWindowTitle(filePath + " - Forkie Editor")
+                self.editor.isSaved = True
+        except TypeError:
+                pass
+
     def opendialog(self):
-        textfile = filedialog.openfile(self)
-        self.editor.text.setPlainText(textfile)
+        try:
+            text, filePath = filedialog.openfile(self)
+            if filePath:
+                self.editor.text.setPlainText(text)
+                self.currentFile = filePath
+                self.setWindowTitle(filePath + " - Forkie Editor")
+                self.editor.isSaved = True
+        except TypeError:
+            pass
 
 
 
@@ -60,6 +110,8 @@ if __name__ == "__main__":
 
     form = mainwin()
     form.show()
+
+    form.setWindowTitle("Untitled - Forkie Editor")
 
     app.exec_()
 
